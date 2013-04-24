@@ -16,13 +16,13 @@
 # [*puppetmaster_server*]
 #   Specify the Puppet Master server name.
 #
-# [*puppetmaster_certname*]
+# [*certname*]
 #   Specify the Puppet Master certificate name. It is usually the server hostname.
 #
 # [*puppetmaster_report*]
 #   Send reports after every transction. Defaults to 'true'. Possible value is 'false'.
 #
-# [*puppetmaster_autosign*]
+# [*autosign*]
 #   Whether to enable autosign. Defaults to 'false'. Possible value is 'true' or file path.
 #
 # [*puppetmaster_reports*]
@@ -34,7 +34,7 @@
 # [*puppetmaster_facts_terminus*]
 #   The node facts terminus. Default to facter. Possible value is 'PuppetDB'.
 #
-# [*puppetmaster_modulepath*]
+# [*modulepath*]
 #   Defines the module path.
 #
 # === Variables
@@ -43,13 +43,13 @@
 #
 #  class { puppetmaster:
 #    puppetmaster_server               => 'puppet1.puppet.test',
-#    puppetmaster_certname             => 'puppet1.puppet.test',
+#    certname                          => 'puppet1.puppet.test',
 #    puppetmaster_report               => 'true',
-#    puppetmaster_autosign             => 'true',
+#    autosign             => 'true',
 #    puppetmaster_reports              => 'store, http',
 #    puppetmaster_reporturl            => 'http://puppet1.puppet.test:8080/reports/upload',
 #    puppetmaster_facts_terminus       => 'PuppetDB',
-#    puppetmaster_modulepath           => '$confdir/modules:$confdir/modules-0',
+#    modulepath                        => '$confdir/modules:$confdir/modules-0',
 #  }
 #
 # === Authors
@@ -65,13 +65,25 @@ class puppetmaster (
   $puppetmaster_service_ensure       = 'running',
   $puppetmaster_service_enable       = 'true',
   $puppetmaster_server               = '',
-  $puppetmaster_certname             = '',
-  $puppetmaster_report               = 'true',
-  $puppetmaster_autosign             = 'false',
+  $puppetmaster_report               = undef,
+  $autosign                          = undef,
   $puppetmaster_reports              = '',
   $puppetmaster_reporturl            = '',
   $puppetmaster_facts_terminus       = '',
-  $puppetmaster_modulepath           = ''
+  $modulepath                        = '',
+  $logdir                            = undef,
+  $vardir                            = undef,
+  $ssldir                            = undef,
+  $rundir                            = undef,
+  $factpath                          = undef,
+  $templatedir                       = undef,
+  $ssl_client_header                 = undef,
+  $ssl_client_verify_header          = undef,
+  $dns_alt_names                     = undef,
+  $certname                          = undef,
+  $storeconfigs                      = undef,
+  $storeconfigs_backend              = undef,
+  
 ) {
 
   include puppetmaster::params
@@ -100,15 +112,103 @@ class puppetmaster (
     ensure  => present,
   }
 
-  if ($puppetmaster_modulepath) {
-    ini_setting { 'puppetmaster_modulepath':
-      section => 'main',
-      setting => 'modulepath',
-      value   => $puppetmaster_modulepath,
+  if $ssl_client_verify_header {
+    ini_setting { 'ssl_client_verify_header':
+      section => 'master',
+      setting => 'ssl_client_verify_header',
+      value   => $ssl_client_verify_header,
     }
   }
 
-  if ($puppetmaster_server) {
+  if $ssl_client_header {
+    ini_setting { 'ssl_client_header':
+      section => 'master',
+      setting => 'ssl_client_header',
+      value   => $ssl_client_header,
+    }
+  }
+
+  if $dns_alt_names {
+    ini_setting { 'dns_alt_names':
+      section => 'master',
+      setting => 'dns_alt_names',
+      value   => $dns_alt_names,
+    }
+  }
+
+  if $storeconfigs_backend {
+    ini_setting { 'storeconfigs_backend':
+      section => 'master',
+      setting => 'storeconfigs_backend',
+      value   => $storeconfigs_backend,
+    }
+  }
+
+  if $storeconfigs {
+    ini_setting { 'storeconfigs':
+      section => 'master',
+      setting => 'storeconfigs',
+      value   => $storeconfigs,
+    }
+  }
+
+  if $templatedir {
+    ini_setting { 'templatedir':
+      section => 'main',
+      setting => 'templatedir',
+      value   => $templatedir,
+    }
+  }
+
+  if $factpath {
+    ini_setting { 'factpath':
+      section => 'main',
+      setting => 'factpath',
+      value   => $factpath,
+    }
+  }
+
+  if $rundir {
+    ini_setting { 'rundir':
+      section => 'main',
+      setting => 'rundir',
+      value   => $rundir,
+    }
+  }
+
+  if $ssldir {
+    ini_setting { 'ssldir':
+      section => 'main',
+      setting => 'ssldir',
+      value   => $ssldir,
+    }
+  }
+
+  if $logdir {
+    ini_setting { 'logdir':
+      section => 'main',
+      setting => 'logdir',
+      value   => $logdir,
+    }
+  }
+
+  if $vardir {
+    ini_setting { 'vardir':
+      section => 'main',
+      setting => 'vardir',
+      value   => $vardir,
+    }
+  }
+
+  if $modulepath {
+    ini_setting { 'modulepath':
+      section => 'main',
+      setting => 'modulepath',
+      value   => $modulepath,
+    }
+  }
+
+  if $puppetmaster_server {
     ini_setting { 'puppetmaster_server':
       section => 'main',
       setting => 'server',
@@ -116,7 +216,7 @@ class puppetmaster (
     }
   }
 
-  if ($puppetmaster_report) {
+  if $puppetmaster_report {
     ini_setting { 'puppetmaster_report':
       section => 'agent',
       setting => 'report',
@@ -124,23 +224,23 @@ class puppetmaster (
     }
   }
 
-  if ($puppetmaster_certname) {
-    ini_setting { 'puppetmaster_certname':
+  if $certname {
+    ini_setting { 'certname':
       section => 'master',
       setting => 'certname',
-      value   => $puppetmaster_certname,
+      value   => $certname,
     }
   }
 
-  if ($puppetmaster_autosign) {
-    ini_setting { 'puppetmaster_autosign':
+  if $autosign {
+    ini_setting { 'autosign':
       section => 'master',
       setting => 'autosign',
-      value   => $puppetmaster_autosign,
+      value   => $autosign,
     }
   }
 
-  if ($puppetmaster_reports) {
+  if $puppetmaster_reports {
     ini_setting { 'puppetmaster_reports':
       section => 'master',
       setting => 'reports',
@@ -148,7 +248,7 @@ class puppetmaster (
     }
   }
 
-  if ($puppetmaster_reporturl) {
+  if $puppetmaster_reporturl {
     ini_setting { 'puppetmaster_reporturl':
       section => 'master',
       setting => 'reporturl',
@@ -156,7 +256,7 @@ class puppetmaster (
     }
   }
 
-  if ($puppetmaster_facts_terminus) {
+  if $puppetmaster_facts_terminus {
     ini_setting { 'puppetmaster_facts_terminus':
       section => 'master',
       setting => 'facts_terminus',
